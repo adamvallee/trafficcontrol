@@ -116,6 +116,33 @@ func (t *CRStatesThreadsafe) DeleteDeliveryService(name tc.DeliveryServiceName) 
 	t.m.Unlock()
 }
 
+// SetDeliveryServiceIfNotExists atomically checks if a delivery service exists and sets it if it doesn't.
+// Returns true if the delivery service was set, false if it already existed.
+func (t *CRStatesThreadsafe) SetDeliveryServiceIfNotExists(name tc.DeliveryServiceName, ds tc.CRStatesDeliveryService) bool {
+	t.m.Lock()
+	defer t.m.Unlock()
+	if _, exists := t.crStates.DeliveryService[name]; !exists {
+		t.crStates.DeliveryService[name] = ds
+		return true
+	}
+	return false
+}
+
+// DeleteDeliveryServicesNotIn atomically deletes all delivery services that are not present in the provided set.
+// Returns the names of the delivery services that were deleted.
+func (t *CRStatesThreadsafe) DeleteDeliveryServicesNotIn(keepSet map[string]struct{}) []tc.DeliveryServiceName {
+	t.m.Lock()
+	defer t.m.Unlock()
+	var deleted []tc.DeliveryServiceName
+	for dsName := range t.crStates.DeliveryService {
+		if _, exists := keepSet[string(dsName)]; !exists {
+			delete(t.crStates.DeliveryService, dsName)
+			deleted = append(deleted, dsName)
+		}
+	}
+	return deleted
+}
+
 // CRStatesPeersThreadsafe provides safe access for multiple goroutines to read a map of Traffic Monitor peers to their returned Crstates, with a single goroutine writer.
 // This could be made lock-free, if the performance was necessary
 type CRStatesPeersThreadsafe struct {

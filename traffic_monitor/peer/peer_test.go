@@ -49,3 +49,56 @@ func TestCrStates(t *testing.T) {
 	}
 
 }
+
+// TestCRStatesThreadsafeAtomicOperations tests the new atomic delivery service operations
+// that fix the race condition between MonitorConfig and HealthResultManager.
+func TestCRStatesThreadsafeAtomicOperations(t *testing.T) {
+	crStates := NewCRStatesThreadsafe()
+	
+	// Test SetDeliveryServiceIfNotExists
+	dsName1 := tc.DeliveryServiceName("test-ds-1")
+	dsName2 := tc.DeliveryServiceName("test-ds-2")
+	ds1 := tc.CRStatesDeliveryService{IsAvailable: false, DisabledLocations: []tc.CacheGroupName{}}
+	ds2 := tc.CRStatesDeliveryService{IsAvailable: true, DisabledLocations: []tc.CacheGroupName{}}
+	
+	// Should set the first time
+	if !crStates.SetDeliveryServiceIfNotExists(dsName1, ds1) {
+		t.Error("Expected SetDeliveryServiceIfNotExists to return true when setting new delivery service")
+	}
+	
+	// Should not set the second time (already exists)
+	if crStates.SetDeliveryServiceIfNotExists(dsName1, ds2) {
+		t.Error("Expected SetDeliveryServiceIfNotExists to return false when delivery service already exists")
+	}
+	
+	// Verify the original value wasn't overwritten
+	if result, exists := crStates.GetDeliveryService(dsName1); !exists || result.IsAvailable != false {
+		t.Error("SetDeliveryServiceIfNotExists overwrote existing delivery service")
+	}
+	
+	// Add another delivery service
+	crStates.SetDeliveryServiceIfNotExists(dsName2, ds2)
+	
+	// Test DeleteDeliveryServicesNotIn
+	keepSet := map[string]struct{}{
+		string(dsName1): {},
+		// Note: dsName2 is NOT in the keep set, so it should be deleted
+	}
+	
+	deleted := crStates.DeleteDeliveryServicesNotIn(keepSet)
+	
+	// Should have deleted dsName2
+	if len(deleted) != 1 || deleted[0] != dsName2 {
+		t.Errorf("Expected to delete dsName2, but deleted: %v", deleted)
+	}
+	
+	// dsName1 should still exist
+	if _, exists := crStates.GetDeliveryService(dsName1); !exists {
+		t.Error("DeleteDeliveryServicesNotIn deleted a delivery service that should have been kept")
+	}
+	
+	// dsName2 should be gone
+	if _, exists := crStates.GetDeliveryService(dsName2); exists {
+		t.Error("DeleteDeliveryServicesNotIn did not delete a delivery service that should have been removed")
+	}
+}

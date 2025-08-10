@@ -364,17 +364,23 @@ func monitorConfigListen(
 
 		cachesChangeSubscriber <- struct{}{}
 
-		// TODO because there are multiple writers to localStates.DeliveryService, there is a race condition, where MonitorConfig (this func) and HealthResultManager could write at the same time, and the HealthResultManager could overwrite a delivery service addition or deletion here. Probably the simplest and most performant fix would be a lock-free algorithm using atomic compare-and-swaps.
+		// Fix race condition: Use atomic operations to prevent HealthResultManager from 
+		// interfering with delivery service updates
 		for _, ds := range monitorConfig.DeliveryService {
 			// since caches default to unavailable, also default DS false
-			if _, exists := localStates.GetDeliveryService(tc.DeliveryServiceName(ds.XMLID)); !exists {
-				localStates.SetDeliveryService(tc.DeliveryServiceName(ds.XMLID), tc.CRStatesDeliveryService{IsAvailable: false, DisabledLocations: []tc.CacheGroupName{}}) // important to initialize DisabledLocations, so JSON is `[]` not `null`
-			}
+			localStates.SetDeliveryServiceIfNotExists(tc.DeliveryServiceName(ds.XMLID), tc.CRStatesDeliveryService{IsAvailable: false, DisabledLocations: []tc.CacheGroupName{}}) // important to initialize DisabledLocations, so JSON is `[]` not `null`
 		}
-		for ds := range localStates.GetDeliveryServices() {
-			if _, exists := monitorConfig.DeliveryService[string(ds)]; !exists {
-				localStates.DeleteDeliveryService(ds)
-			}
+		
+		// Build set of delivery services that should be kept
+		keepSet := make(map[string]struct{}, len(monitorConfig.DeliveryService))
+		for xmlid := range monitorConfig.DeliveryService {
+			keepSet[xmlid] = struct{}{}
+		}
+		
+		// Atomically delete delivery services not in the current config
+		deleted := localStates.DeleteDeliveryServicesNotIn(keepSet)
+		for _, dsName := range deleted {
+			log.Warnf("Removing delivery service %s from localStates", dsName)
 		}
 	}
 }
