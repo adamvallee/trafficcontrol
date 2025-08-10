@@ -49,11 +49,11 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.2.2@v3
 
       - name: Cache node modules
         id: restore-npm-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4.2.4
         with:
           path: ./experimental/traffic-portal/node_modules
           key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('./experimental/traffic-portal/package-lock.json') }}
@@ -81,11 +81,11 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.2.2
 
       - name: Cache node modules
         id: restore-npm-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4.2.4
         with:
           path: ./experimental/traffic-portal/node_modules
           key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('./experimental/traffic-portal/package-lock.json') }}
@@ -114,11 +114,11 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.2.2
 
       - name: Cache node modules
         id: restore-npm-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4.2.4
         with:
           path: ./experimental/traffic-portal/node_modules
           key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('./experimental/traffic-portal/package-lock.json') }}
@@ -183,9 +183,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.2.2
       - name: Cache Alpine Docker image
-        uses: actions/cache@v3
+        uses: actions/cache@v4.2.4
         with:
           path: ${{ github.workspace }}/docker-images
           key: docker-images/alpine@${{ env.ALPINE_VERSION }}.tar.gz
@@ -193,7 +193,7 @@ jobs:
         run: .github/actions/save-alpine-tar/entrypoint.sh load ${{ env.ALPINE_VERSION }}
       - name: Cache node modules
         id: restore-npm-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4.2.4
         with:
           path: ./experimental/traffic-portal/node_modules
           key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('./experimental/traffic-portal/package-lock.json') }}
@@ -277,11 +277,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 5
       - name: Cache node modules
-        uses: actions/cache@v2
+        uses: actions/cache@v4.2.4
         with:
           path: ${{ github.workspace }}/.npm
           key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('./experimental/traffic-portal/package-lock.json') }}
