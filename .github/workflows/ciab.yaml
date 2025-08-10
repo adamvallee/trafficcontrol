@@ -150,7 +150,7 @@ jobs:
         with:
           fetch-depth: 5
       - name: Cache node modules
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/.npm
           key: ${{ runner.os }}-node-modules-${{ hashFiles('traffic_portal/**/package*.json') }}-
@@ -175,7 +175,7 @@ jobs:
         with:
           fetch-depth: 5
       - name: Cache local Maven repository
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -268,7 +268,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Get expected RPM name
         uses: ./.github/actions/repo-info
         with:
@@ -278,7 +278,7 @@ jobs:
         id: repo-info
       - name: Check Cache
         id: ats-rpm-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/dist
           key: ${{ steps.repo-info.outputs.expected-rpm-name }}-${{ hashFiles('cache-config/testing/docker/trafficserver/**') }}
@@ -316,7 +316,7 @@ jobs:
         with:
           fetch-depth: 5
       - name: Cache Alpine Docker image
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/docker-images
           key: docker-images/alpine@${{ env.ALPINE_VERSION }}.tar.gz
